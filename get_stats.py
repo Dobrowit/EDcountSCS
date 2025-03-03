@@ -16,6 +16,8 @@ import matplotlib.animation as animation
 URL = "https://downloads.spansh.co.uk/galaxy_stations.json.gz"
 PLIK_GZ = "galaxy_stations.json.gz"
 PLIK_DATY = "last_download.json"
+dzisiejsza_data = "2025-03-03"  # Możesz dynamicznie pobierać datę np. datetime.today().strftime("%Y-%m-%d")
+
 
 # Dekorator do pomiaru czasu wykonania funkcji
 def measure_time(func):
@@ -87,6 +89,7 @@ def count_system_colonisation_ships_stream(plik_gz):
                         "id64": element.get("id64"),
                         "name": element.get("name"),
                         "coords": element.get("coords"),
+                        "population": element.get("population"),
                         "stations": [
                             {
 #                                "name": station.get("name"),
@@ -112,12 +115,6 @@ def count_system_colonisation_ships_stream(plik_gz):
     except (OSError, ijson.JSONError) as e:
         print(f"Błąd odczytu pliku: {e}")
 
-# Sprawdzenie i pobranie pliku jeśli trzeba
-if trzeba_pobrac_plik():
-    pobierz_plik()
-
-count_system_colonisation_ships_stream(PLIK_GZ)
-
 def rysuj_wspolrzedne_3d(plik_json):
     if not os.path.exists(plik_json):
         print(f"Plik {plik_json} nie istnieje.")
@@ -134,6 +131,8 @@ def rysuj_wspolrzedne_3d(plik_json):
             x.append(coords.get("x", 0))
             y.append(coords.get("y", 0))
             z.append(coords.get("z", 0))
+
+        print(f"{len(x)} stars")
 
         # Tworzenie wykresu 3D
         fig = plt.figure(figsize=(10, 8))
@@ -155,13 +154,6 @@ def rysuj_wspolrzedne_3d(plik_json):
     except json.JSONDecodeError:
         print(f"Błąd odczytu JSON w pliku {plik_json}")
 
-# Przykład użycia
-dzisiejsza_data = "2025-03-02"  # Możesz dynamicznie pobierać datę np. datetime.today().strftime("%Y-%m-%d")
-plik_wejsciowy = f"colonisation_ships_{dzisiejsza_data}.json"
-rysuj_wspolrzedne_3d(plik_wejsciowy)
-
-
-
 def rysuj_wspolrzedne_3d_z_animacja(plik_json):
     if not os.path.exists(plik_json):
         print(f"Plik {plik_json} nie istnieje.")
@@ -179,6 +171,8 @@ def rysuj_wspolrzedne_3d_z_animacja(plik_json):
             y.append(coords.get("y", 0))
             z.append(coords.get("z", 0))
 
+        print(f"{len(x)} stars")
+
         # Tworzenie wykresu 3D
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
@@ -194,8 +188,17 @@ def rysuj_wspolrzedne_3d_z_animacja(plik_json):
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
         ax.set_zlabel("Z")
-        ax.set_title("System Colonisation Ships - 3D Map (Animated)")
-        ax.legend()
+#        ax.set_title("System Colonisation Ships - 3D Map (Animated)")
+#        ax.legend()
+
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        ax.set_zticklabels([])
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_zticks([])
+        ax.grid(False)  # Wyłącza siatkę
+
 
         # Funkcja aktualizująca animację
         def update(frame):
@@ -209,7 +212,11 @@ def rysuj_wspolrzedne_3d_z_animacja(plik_json):
     except json.JSONDecodeError:
         print(f"Błąd odczytu JSON w pliku {plik_json}")
 
-# Przykład użycia
-dzisiejsza_data = "2025-03-02"  # Możesz dynamicznie pobierać datę np. datetime.today().strftime("%Y-%m-%d")
+# Sprawdzenie i pobranie pliku jeśli trzeba
+if trzeba_pobrac_plik():
+    pobierz_plik()
+
+count_system_colonisation_ships_stream(PLIK_GZ)
 plik_wejsciowy = f"colonisation_ships_{dzisiejsza_data}.json"
+rysuj_wspolrzedne_3d(plik_wejsciowy)
 rysuj_wspolrzedne_3d_z_animacja(plik_wejsciowy)
