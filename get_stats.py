@@ -13,6 +13,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from functools import wraps
 from datetime import datetime
 from sklearn.preprocessing import MinMaxScaler
+from tqdm import tqdm
 
 
 URL = "https://downloads.spansh.co.uk/galaxy_stations.json.gz"
@@ -55,7 +56,7 @@ def zapisz_date_pobrania():
 
 
 @measure_time
-def pobierz_plik():
+def pobierz_plik_old():
     print("Pobieranie pliku...")
     try:
         response = requests.get(URL, stream=True)
@@ -70,6 +71,28 @@ def pobierz_plik():
     except requests.RequestException as e:
         print(f"Błąd pobierania pliku: {e}")
 
+@measure_time
+def pobierz_plik():
+    print("Pobieranie pliku...")
+    try:
+        response = requests.get(URL, stream=True)
+        response.raise_for_status()
+        
+        total_size = int(response.headers.get("content-length", 0))
+        chunk_size = 8192
+
+        with open(PLIK_GZ, "wb") as f, tqdm(
+            total=total_size, unit="B", unit_scale=True, desc="Pobieranie"
+        ) as progress_bar:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    f.write(chunk)
+                    progress_bar.update(len(chunk))
+
+        print("\nPobieranie zakończone.")
+        zapisz_date_pobrania()
+    except requests.RequestException as e:
+        print(f"Błąd pobierania pliku: {e}")
 
 @measure_time
 def count_system_colonisation_ships_stream(plik_gz):
@@ -206,9 +229,6 @@ def rysuj_wspolrzedne_3d(plik_json, anim=True):
         # Ustawienie czarnego tła
         fig.patch.set_facecolor('black')  # Tło figury
         ax.set_facecolor('black')  # Tło osi
-        ax.w_xaxis.set_pane_color((0, 0, 0, 1))
-        ax.w_yaxis.set_pane_color((0, 0, 0, 1))
-        ax.w_zaxis.set_pane_color((0, 0, 0, 1))
 
         if anim:
             # Funkcja aktualizująca animację
@@ -219,7 +239,7 @@ def rysuj_wspolrzedne_3d(plik_json, anim=True):
             ani = animation.FuncAnimation(fig, update, frames=np.arange(0, 360, 1), interval=50, repeat=True)
 
         # Połączenie funkcji obsługującej kliknięcia
-        fig.canvas.mpl_connect('pick_event', on_pick)
+        # fig.canvas.mpl_connect('pick_event', on_pick)
         
         plt.show()
 
@@ -233,4 +253,4 @@ if trzeba_pobrac_plik():
 
 count_system_colonisation_ships_stream(PLIK_GZ)
 plik_wejsciowy = f"colonisation_ships_{dzisiejsza_data}.json"
-rysuj_wspolrzedne_3d(plik_wejsciowy, False)
+rysuj_wspolrzedne_3d(plik_wejsciowy, True)
